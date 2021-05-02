@@ -1,7 +1,7 @@
 #!/usr/bin/python2
 
 import time
-from Queue import PriorityQueue
+from queue import PriorityQueue
 from threading import Condition
 
 class TimedPriorityQueue(PriorityQueue):

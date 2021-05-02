@@ -4,7 +4,7 @@ import hashlib
 import time
 import logging
 from threading import Thread, Lock, Condition, Semaphore
-import queue as Queue
+from Queue import Queue
 from util import TimedPriorityQueue, RLUQueue
 from gbd import GBD
 
@@ -60,7 +60,7 @@ class CachedGBD:
         cache_uuid = self.cache.read(len(self.uuid))
         if cache_uuid == "\0" * len(self.uuid):
             logger.info("The cache file is empty, not loading anything")
-            for i in range(self.entry_count):
+            for i in xrange(self.entry_count):
                 self.clean_que.put(i)
             return
         if cache_uuid != self.uuid:
@@ -68,7 +68,7 @@ class CachedGBD:
 
         self.cache.seek(len(self.uuid), os.SEEK_SET)
         record = self.cache.read(8 * self.entry_count)
-        for i in range(0, self.entry_count):
+        for i in xrange(0, self.entry_count):
             entry = struct.unpack("!Q", record[i*8:i*8+8])[0]
             if entry != self.EMPTY:
                 assert entry < self.block_count and entry not in self.map
@@ -95,7 +95,7 @@ class CachedGBD:
         state = [idxr + 1 - idxl, None]
         data_list = [None] * state[0]
 
-        for idx in range(idxl, idxr + 1):
+        for idx in xrange(idxl, idxr + 1):
 
             rngl = max(offset, idx * self.block_size)
             rngr = min(offset + length, (idx + 1) * self.block_size)
@@ -151,7 +151,7 @@ class CachedGBD:
         lock = Lock()
         state = [idxr + 1 - idxl, None]
 
-        for idx in range(idxl, idxr + 1):
+        for idx in xrange(idxl, idxr + 1):
 
             rngl = max(offset, idx * self.block_size)
             rngr = min(offset + len(data), (idx + 1) * self.block_size)
@@ -186,7 +186,7 @@ class CachedGBD:
     def save_map(self):
 
         def pack(ull):
-            return ''.join(chr((ull >> i) % 256) for i in range(56, -1, -8))
+            return ''.join(chr((ull >> i) % 256) for i in xrange(56, -1, -8))
 
         logger.info("Saving map...")
         with self.cache_lock:
@@ -364,7 +364,7 @@ if __name__ == "__main__":
     gbd = CachedGBD('./.cache', create=True, gbd_data_folder='gbd-meow')
 
     def read(x, l):
-        print("=> '" + gbd.read(x, l) + "'")
+        print "=> '" + gbd.read(x, l) + "'"
 
     def write(x, d):
         gbd.write(x, d)
@@ -372,7 +372,7 @@ if __name__ == "__main__":
     read(0, 5)
 
     while True:
-        cmd = input().strip().split()
+        cmd = raw_input().strip().split()
         if cmd[0] == 'w':
             write(int(cmd[1]), cmd[2])
         else:

@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import six
+
 import os
 import sys
 import struct
@@ -153,16 +153,17 @@ class NBDServer:
             sys.exit(0)
 
     def handshake(self, conn):
-        conn.send(six.b('NBDMAGIC'))
+
+        conn.send("NBDMAGIC")
         conn.send(self.MAGIC)
         conn.send(struct.pack("!H", self.NBD_FLAG_FIXED_NEWSTYLE | self.NBD_FLAG_NO_ZEROES))
 
         cliopt = struct.unpack("!I", conn.recv(4, socket.MSG_WAITALL))[0]
-        #assert conn.recv(8, socket.MSG_WAITALL) == self.MAGIC
+        assert conn.recv(8, socket.MSG_WAITALL) == self.MAGIC
         c_no_zero = cliopt & self.NBD_FLAG_C_NO_ZEROS
 
         option = struct.unpack("!I", conn.recv(4, socket.MSG_WAITALL))[0]
-        #assert option == self.NBD_OPT_EXPORT_NAME
+        assert option == self.NBD_OPT_EXPORT_NAME
         
         length = struct.unpack("!I", conn.recv(4, socket.MSG_WAITALL))[0]
         name = conn.recv(length, socket.MSG_WAITALL)
@@ -181,7 +182,7 @@ class NBDServer:
         name = self.GBD_NAME_FMT.format(name)
 
         if not os.path.isfile(name):
-            cache_size = int(input("Desired cache size (MB): "))
+            cache_size = int(raw_input("Desired cache size (MB): "))
             assert cache_size > 0
             with open(name, 'wb') as fout:
                 fout.write("\0" * (cache_size << 20))

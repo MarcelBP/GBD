@@ -1,10 +1,17 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
+from __future__ import print_function
 
 import json
 import hashlib
 import logging
 import time
 import random
+
+import os.path
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
 
 from threading import Thread, Lock, Semaphore
 from config import Config, Metadata
@@ -85,12 +92,6 @@ class GBD:
         self.config = Config.copy()
         self.config.update(config)
 
-        self.auth_mgr = AuthManager(
-            self.config['appname'],
-            self.config['oauth_client_id'],
-            self.config['oauth_client_secret'],
-            self.config['oauth_scope'],
-            self.config['oauth_redirect_uri'])
         self.drive = self.build_service()
 
         self.data_dir = self.get_data_dir()
@@ -115,7 +116,26 @@ class GBD:
     ## init
 
     def build_service(self):
-        return build_service('drive', 'v2', http=self.auth_mgr.get_auth_http())
+        SCOPES = ['https://www.googleapis.com/auth/drive']
+        creds = None
+    # The file token.json stores the user's access and refresh tokens, and is
+    # created automatically when the authorization flow completes for the first
+    # time.
+        if os.path.exists('token.json'):
+            creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    # If there are no (valid) credentials available, let the user log in.
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    'credentials.json', SCOPES)
+                creds = flow.run_local_server(port=0)
+        # Save the credentials for the next run
+            with open('token.json', 'w') as token:
+                token.write(creds.to_json())
+        return  build('drive', 'v3', credentials=creds)
+        #return build_service('drive', 'v2', http=self.auth_mgr.get_auth_http())
 
     def get_data_dir(self):
 

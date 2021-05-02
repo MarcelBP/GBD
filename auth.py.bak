@@ -2,7 +2,7 @@
 
 import os
 import httplib2
-import keyring
+from oauth2client.keyring_storage import Storage
 from oauth2client.client import OAuth2WebServerFlow
 
 class AuthManager:
@@ -23,14 +23,20 @@ class AuthManager:
                 redirect_uri = self.redirect_uri)
 
         auth_uri = flow.step1_get_authorize_url()
-        print("Please visit `{0}' to get secret code.".format(auth_uri))
+        print "Please visit `{0}' to get secret code.".format(auth_uri)
 
-        code = input("Enter the code: ").strip()
+        code = raw_input("Enter the code: ").strip()
         return flow.step2_exchange(code)
 
     def get_credentials(self):
 
-        credentials = self.request_credentials()
+        storage = Storage(self.appname, os.getlogin())
+
+        credentials = storage.get()
+        if not credentials or credentials.invalid:
+            credentials = self.request_credentials()
+            storage.put(credentials)
+
         return credentials
 
     def get_auth_http(self, credentials=None):
